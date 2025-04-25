@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cafe Vesna</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: #f8f8f8;
+            color: #333;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        .container {
+            padding: 15px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4a4a4a;
+        }
+        .city-selector {
+            margin-bottom: 20px;
+        }
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 12px 15px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+        }
+        .tab.active {
+            color: #0088cc;
+            border-bottom: 2px solid #0088cc;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .section h2 {
+            margin-bottom: 12px;
+            font-size: 18px;
+            color: #333;
+        }
+        .slider-container {
+            margin: 20px 0;
+        }
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #e0e0e0;
+            border-radius: 5px;
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            background: #0088cc;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .slider-value {
+            text-align: center;
+            font-size: 16px;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .date-time {
+            display: flex;
+            gap: 10px;
+        }
+        .table-type-toggle {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 5px;
+            margin-bottom: 15px;
+        }
+        .toggle-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .toggle-btn.active {
+            background: #0088cc;
+            color: white;
+        }
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .table {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .table:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .table.selected {
+            background: #0088cc;
+            color: white;
+            border-color: #006699;
+        }
+        .table.banquet {
+            background: #fff4e0;
+        }
+        .table.banquet.selected {
+            background: #ffaa00;
+            border-color: #e69500;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #006699;
+        }
+        .btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .receipt {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .receipt h2 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #0088cc;
+        }
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .receipt-item:last-child {
+            border-bottom: none;
+        }
+        .receipt-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        .edit-btn {
+            color: #0088cc;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        /* Стили для меню самовывоза */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .menu-item {
+            background: white;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .menu-item-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .menu-item-title {
+            font-weight: 600;
+            margin: 8px 0 5px;
+        }
+        .menu-item-price {
+            color: #0088cc;
+            font-weight: 700;
+        }
+        .menu-item-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .add-to-cart {
+            background: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .favorite-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #ccc;
+            cursor: pointer;
+        }
+        .favorite-btn.active {
+            color: #ff4757;
+        }
+        /* Стили для корзины */
+        .cart-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #0088cc;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 999;
+            cursor: pointer;
+        }
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4757;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .modal-content {
+            background: white;
+            margin: 20px auto;
+            max-width: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .modal-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .modal-title {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .modal-price {
+            font-size: 18px;
+            color: #0088cc;
+            margin-bottom: 15px;
+        }
+        .modal-description {
+            margin-bottom: 20px;
+            color: #666;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .modal-add-btn {
+            width: 100%;
+            padding: 12px;
+            background: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        /* Модальное окно корзины */
+        .cart-modal-content {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .cart-item-info {
+            display: flex;
+            align-items: center;
+        }
+        .cart-item-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 10px;
+        }
+        .cart-item-quantity {
+            display: flex;
+            align-items: center;
+        }
+        .quantity-btn {
+            width: 25px;
+            height: 25px;
+            background: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .cart-item-total {
+            font-weight: 700;
+            margin-top: 15px;
+            text-align: right;
+        }
+        .checkout-btn {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Кафе "Весна"</h1>
+        
+        <div class="city-selector">
+            <select id="city">
+                <option value="">Выберите город</option>
+                <option value="khujand">Худжанд</option>
+                <option value="dushanbe">Душанбе</option>
+                <option value="moscow">Москва</option>
+                <option value="uae">ОАЭ</option>
+            </select>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="booking">Бронь стола</div>
+            <div class="tab" data-tab="pickup">Самовывоз</div>
+            <div class="tab" data-tab="delivery">Доставка</div>
+        </div>
+        
+        <!-- Раздел бронирования столов -->
+        <div id="booking" class="tab-content active">
+            <div class="section">
+                <h2>Выберите дату и время</h2>
+                <div class="date-time">
+                    <input type="date" id="date">
+                    <input type="time" id="time">
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Количество гостей</h2>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="2" class="slider" id="people">
+                    <div class="slider-value" id="people-value">2 человека</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="table-type-toggle">
+                    <div class="toggle-btn active" id="regular-tables-btn">Обычные столы</div>
+                    <div class="toggle-btn" id="banquet-tables-btn">Банкет</div>
+                </div>
+                
+                <div id="regular-tables">
+                    <h2>Выберите стол</h2>
+                    <div class="tables-grid" id="tables-grid">
+                        <div class="table" data-id="1">Стол 1 (2 чел.)</div>
+                        <div class="table" data-id="2">Стол 2 (2 чел.)</div>
+                        <div class="table" data-id="3">Стол 3 (4 чел.)</div>
+                        <div class="table" data-id="4">Стол 4 (4 чел.)</div>
+                        <div class="table" data-id="5">Стол 5 (6 чел.)</div>
+                        <div class="table" data-id="6">Стол 6 (6 чел.)</div>
+                        <div class="table" data-id="7">Стол 7 (8 чел.)</div>
+                        <div class="table" data-id="8">Стол 8 (8 чел.)</div>
+                        <div class="table" data-id="9">Стол 9 (10 чел.)</div>
+                        <div class="table" data-id="10">Стол 10 (10 чел.)</div>
+                    </div>
+                </div>
+                
+                <div id="banquet-tables" style="display: none;">
+                    <h2>Банкетные залы</h2>
+                    <div class="tables-grid" id="banquet-grid">
+                        <div class="table banquet" data-id="b1">Банкет 1 (до 10 чел.)</div>
+                        <div class="table banquet" data-id="b2">Банкет 2 (до 20 чел.)</div>
+                        <div class="table banquet" data-id="b3">Банкет 3 (до 30 чел.)</div>
+                        <div class="table banquet" data-id="b4">Банкет 4 (до 40 чел.)</div>
+                        <div class="table banquet" data-id="b5">Банкет 5 (до 50 чел.)</div>
+                        <div class="table banquet" data-id="b6">Банкет 6 (до 60 чел.)</div>
+                        <div class="table banquet" data-id="b7">Банкет 7 (до 70 чел.)</div>
+                        <div class="table banquet" data-id="b8">Банкет 8 (до 80 чел.)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn" id="book-btn">Забронировать</button>
+            
+            <!-- Чек после бронирования -->
+            <div class="receipt" id="receipt">
+                <h2>Ваша бронь</h2>
+                <div class="receipt-item">
+                    <span>📍 Кафе "Весна" <span id="receipt-city"></span></span>
+                    <span class="edit-btn" onclick="editField('city')">Изменить</span>
+                </div>
+                <div class="receipt-item">
+                    <span>📅 <span id="receipt-date"></span>, <span id="receipt-time"></span></span>
+                    <span class="edit-btn" onclick="editField('datetime')">Изменить</span>
+                </div>
+                <div class="receipt-item">
+                    <span>👥 <span id="receipt-people"></span> гостей</span>
+                    <span class="edit-btn" onclick="editField('people')">Изменить</span>
+                </div>
+                <div class="receipt-item">
+                    <span>🪑 <span id="receipt-table"></span></span>
+                    <span class="edit-btn" onclick="editField('table')">Изменить</span>
+                </div>
+                <button class="btn" id="confirm-btn" style="margin-top: 20px;">Подтвердить бронь</button>
+            </div>
+        </div>
+        
+        <!-- Раздел самовывоза -->
+        <div id="pickup" class="tab-content">
+            <div class="section location-selector">
+                <h2>Откуда заберете заказ?</h2>
+                <select id="pickup-location">
+                    <option value="khujand">Худжанд, ул. Центральная, 12</option>
+                    <option value="dushanbe">Душанбе, пр. Рудаки, 45</option>
+                    <option value="moscow">Москва, ул. Арбат, 23</option>
+                    <option value="uae">Дубай, Trade Center, 1</option>
+                </select>
+            </div>
+            
+            <div class="section">
+                <h2>Меню</h2>
+                <div class="menu-grid" id="menu-grid">
+                    <!-- Блюда будут добавлены через JS -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Раздел доставки -->
+        <div id="delivery" class="tab-content">
+            <div class="section">
+                <h2>Доставка</h2>
+                <p>Скоро здесь будет возможность заказать доставку</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Иконка корзины (только для самовывоза) -->
+    <div class="cart-icon" id="cart-icon" style="display: none;">
+        🛒
+        <div class="cart-count" id="cart-count">0</div>
+    </div>
+
+    <!-- Модальное окно блюда -->
+    <div class="modal" id="dish-modal">
+        <button class="modal-close" id="modal-close">×</button>
+        <div class="modal-content">
+            <img src="" class="modal-img" id="modal-img">
+            <div class="modal-body">
+                <h2 class="modal-title" id="modal-title"></h2>
+                <div class="modal-price" id="modal-price"></div>
+                <p class="modal-description" id="modal-description"></p>
+                <button class="modal-add-btn" id="modal-add-btn">Добавить в корзину</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно корзины -->
+    <div class="modal" id="cart-modal">
+        <button class="modal-close" id="cart-modal-close">×</button>
+        <div class="modal-content cart-modal-content">
+            <div class="modal-body">
+                <h2 class="modal-title">Ваша корзина</h2>
+                <div id="cart-items-container">
+                    <!-- Товары будут добавлены через JS -->
+                </div>
+                <div class="cart-item-total">
+                    Итого: <span id="cart-total">0</span> ₽
+                </div>
+                <button class="btn checkout-btn" id="checkout-btn">Оформить самовывоз</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Данные меню
+        const menuItems = [
+            {
+                id: 1,
+                name: "Борщ",
+                price: 250,
+                image: "https://example.com/borsh.jpg",
+                description: "Классический украинский борщ с говядиной, свеклой и сметаной."
+            },
+            {
+                id: 2,
+                name: "Лагман жидкий",
+                price: 280,
+                image: "https://example.com/lagman.jpg",
+                description: "Национальное блюдо с лапшой, мясом и овощами."
+            },
+            {
+                id: 3,
+                name: "Окрошка мясная",
+                price: 220,
+                image: "https://example.com/okroshka.jpg",
+                description: "Освежающий холодный суп с мясом, овощами и квасом."
+            },
+            {
+                id: 4,
+                name: "Пельмени",
+                price: 300,
+                image: "https://example.com/pelmeni.jpg",
+                description: "Домашние пельмени с говядиной и свининой, подаются со сметаной."
+            },
+            {
+                id: 5,
+                name: "Солянка",
+                price: 270,
+                image: "https://example.com/solyanka.jpg",
+                description: "Густой острый суп с различными видами мяса и солеными огурцами."
+            },
+            {
+                id: 6,
+                name: "Суп куриный",
+                price: 200,
+                image: "https://example.com/chicken-soup.jpg",
+                description: "Ароматный куриный суп с лапшой и зеленью."
+            },
+            {
+                id: 7,
+                name: "Суп чечевичный",
+                price: 230,
+                image: "https://example.com/lentil-soup.jpg",
+                description: "Питательный суп из чечевицы с овощами и специями."
+            },
+            {
+                id: 8,
+                name: "Суп пити",
+                price: 320,
+                image: "https://example.com/piti.jpg",
+                description: "Традиционный азербайджанский суп с бараниной и нутом."
+            },
+            {
+                id: 9,
+                name: "Харчо",
+                price: 290,
+                image: "https://example.com/harcho.jpg",
+                description: "Грузинский острый суп с говядиной, рисом и грецкими орехами."
+            },
+            {
+                id: 10,
+                name: "Шурпа из Баранины",
+                price: 350,
+                image: "https://example.com/lamb-shurpa.jpg",
+                description: "Наваристый суп с бараниной, картофелем и морковью."
+            },
+            {
+                id: 11,
+                name: "Шурпа из говядины",
+                price: 330,
+                image: "https://example.com/beef-shurpa.jpg",
+                description: "Ароматный суп с говядиной и свежими овощами."
+            },
+            {
+                id: 12,
+                name: "Щи зеленые",
+                price: 210,
+                image: "https://example.com/green-schi.jpg",
+                description: "Традиционные щи со щавелем, яйцом и сметаной."
+            }
+        ];
+
+        // Корзина
+        let cart = [];
+        let favorites = [];
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            initBookingTab();
+            initPickupTab();
+            setupTabSwitching();
+        });
+
+        // Инициализация вкладки бронирования
+        function initBookingTab() {
+            // Переключение между столами и банкетом
+            const regularBtn = document.getElementById('regular-tables-btn');
+            const banquetBtn = document.getElementById('banquet-tables-btn');
+            const regularTables = document.getElementById('regular-tables');
+            const banquetTables = document.getElementById('banquet-tables');
+            
+            regularBtn.addEventListener('click', () => {
+                regularBtn.classList.add('active');
+                banquetBtn.classList.remove('active');
+                regularTables.style.display = 'block';
+                banquetTables.style.display = 'none';
+            });
+            
+            banquetBtn.addEventListener('click', () => {
+                banquetBtn.classList.add('active');
+                regularBtn.classList.remove('active');
+                banquetTables.style.display = 'block';
+                regularTables.style.display = 'none';
+            });
+            
+            // Слайдер количества людей
+            const peopleSlider = document.getElementById('people');
+            const peopleValue = document.getElementById('people-value');
+            peopleSlider.addEventListener('input', () => {
+                peopleValue.textContent = `${peopleSlider.value} ${peopleSlider.value == 1 ? 'человек' : 'человека'}`;
+            });
+            
+            // Выбор стола
+            let selectedTable = null;
+            document.querySelectorAll('.table').forEach(table => {
+                table.addEventListener('click', () => {
+                    document.querySelectorAll('.table').forEach(t => t.classList.remove('selected'));
+                    table.classList.add('selected');
+                    selectedTable = {
+                        id: table.dataset.id,
+                        name: table.textContent
+                    };
+                });
+            });
+            
+            // Бронирование (показ чека)
+            const bookBtn = document.getElementById('book-btn');
+            const receipt = document.getElementById('receipt');
+            
+            bookBtn.addEventListener('click', () => {
+                const city = document.getElementById('city');
+                const date = document.getElementById('date');
+                const time = document.getElementById('time');
+                
+                if (!city.value || !date.value || !time.value || !selectedTable) {
+                    alert('Заполните все поля!');
+                    return;
+                }
+                
+                // Заполнение чека
+                document.getElementById('receipt-city').textContent = city.options[city.selectedIndex].text;
+                document.getElementById('receipt-date').textContent = date.value;
+                document.getElementById('receipt-time').textContent = time.value;
+                document.getElementById('receipt-people').textContent = peopleSlider.value;
+                document.getElementById('receipt-table').textContent = selectedTable.name;
+                
+                // Показ чека и скрытие формы
+                document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+                bookBtn.style.display = 'none';
+                receipt.style.display = 'block';
+            });
+            
+            // Редактирование полей в чеке
+            function editField(field) {
+                receipt.style.display = 'none';
+                document.querySelectorAll('.section').forEach(s => s.style.display = 'block');
+                bookBtn.style.display = 'block';
+                
+                if (field === 'table') {
+                    if (peopleSlider.value >= 7) {
+                        banquetBtn.click();
+                    } else {
+                        regularBtn.click();
+                    }
+                }
+            }
+            
+            // Отправка данных в бота
+            document.getElementById('confirm-btn').addEventListener('click', () => {
+                const bookingData = {
+                    city: document.getElementById('city').value,
+                    date: document.getElementById('date').value,
+                    time: document.getElementById('time').value,
+                    people: peopleSlider.value,
+                    table: selectedTable
+                };
+                tg.sendData(JSON.stringify(bookingData));
+                tg.close();
+            });
+        }
+
+        // Инициализация вкладки самовывоза
+        function initPickupTab() {
+            // Заполнение меню
+            const menuGrid = document.getElementById('menu-grid');
+            menuItems.forEach(item => {
+                const menuItem = document.createElement('div');
+                menuItem.className = 'menu-item';
+                menuItem.innerHTML = `
+                    <img src="${item.image}" class="menu-item-img" alt="${item.name}">
+                    <div class="menu-item-title">${item.name}</div>
+                    <div class="menu-item-price">${item.price} ₽</div>
+                    <div class="menu-item-actions">
+                        <button class="add-to-cart" data-id="${item.id}">+</button>
+                        <button class="favorite-btn" data-id="${item.id}">♥</button>
+                    </div>
+                `;
+                menuGrid.appendChild(menuItem);
+            });
+
+            // Модальное окно блюда
+            const modal = document.getElementById('dish-modal');
+            const modalClose = document.getElementById('modal-close');
+            const modalImg = document.getElementById('modal-img');
+            const modalTitle = document.getElementById('modal-title');
+            const modalPrice = document.getElementById('modal-price');
+            const modalDescription = document.getElementById('modal-description');
+            const modalAddBtn = document.getElementById('modal-add-btn');
+
+            // Обработчики для кнопок добавления в корзину
+            document.querySelectorAll('.add-to-cart').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const itemId = parseInt(btn.dataset.id);
+                    const item = menuItems.find(i => i.id === itemId);
+                    
+                    modalImg.src = item.image;
+                    modalTitle.textContent = item.name;
+                    modalPrice.textContent = `${item.price} ₽`;
+                    modalDescription.textContent = item.description;
+                    modalAddBtn.dataset.id = itemId;
+                    modal.style.display = 'block';
+                });
+            });
+
+            // Закрытие модального окна
+            modalClose.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+
+            // Добавление в избранное
+            document.querySelectorAll('.favorite-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const itemId = parseInt(btn.dataset.id);
+                    const index = favorites.indexOf(itemId);
+                    
+                    if (index === -1) {
+                        favorites.push(itemId);
+                        btn.classList.add('active');
+                    } else {
+                        favorites.splice(index, 1);
+                        btn.classList.remove('active');
+                    }
+                });
+            });
+
+            // Добавление в корзину
+            modalAddBtn.addEventListener('click', () => {
+                const itemId = parseInt(modalAddBtn.dataset.id);
+                const existingItem = cart.find(item => item.id === itemId);
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    const item = menuItems.find(i => i.id === itemId);
+                    cart.push({
+                        ...item,
+                        quantity: 1
+                    });
+                }
+                
+                updateCartCount();
+                modal.style.display = 'none';
+            });
+
+            // Модальное окно корзины
+            const cartModal = document.getElementById('cart-modal');
+            const cartModalClose = document.getElementById('cart-modal-close');
+            const cartItemsContainer = document.getElementById('cart-items-container');
+            const cartTotal = document.getElementById('cart-total');
+            const checkoutBtn = document.getElementById('checkout-btn');
+
+            // Открытие корзины
+            document.getElementById('cart-icon').addEventListener('click', () => {
+                updateCartModal();
+                cartModal.style.display = 'block';
+            });
+
+            // Закрытие корзины
+            cartModalClose.addEventListener('click', () => {
+                cartModal.style.display = 'none';
+            });
+
+            // Обновление модального окна корзины
+            function updateCartModal() {
+                cartItemsContainer.innerHTML = '';
+                let total = 0;
+                
+                cart.forEach(item => {
+                    const cartItem = document.createElement('div');
+                    cartItem.className = 'cart-item';
+                    cartItem.innerHTML = `
+                        <div class="cart-item-info">
+                            <img src="${item.image}" class="cart-item-img" alt="${item.name}">
+                            <div>
+                                <div>${item.name}</div>
+                                <div>${item.price} ₽</div>
+                            </div>
+                        </div>
+                        <div class="cart-item-quantity">
+                            <button class="quantity-btn" data-id="${item.id}" data-action="decrease">-</button>
+                            <span style="margin: 0 10px">${item.quantity}</span>
+                            <button class="quantity-btn" data-id="${item.id}" data-action="increase">+</button>
+                        </div>
+                    `;
+                    cartItemsContainer.appendChild(cartItem);
+                    
+                    total += item.price * item.quantity;
+                });
+                
+                cartTotal.textContent = total;
+                
+                // Обработчики для кнопок изменения количества
+                document.querySelectorAll('.quantity-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const itemId = parseInt(btn.dataset.id);
+                        const action = btn.dataset.action;
+                        const item = cart.find(i => i.id === itemId);
+                        
+                        if (action === 'increase') {
+                            item.quantity += 1;
+                        } else if (action === 'decrease') {
+                            item.quantity -= 1;
+                            if (item.quantity <= 0) {
+                                cart = cart.filter(i => i.id !== itemId);
+                            }
+                        }
+                        
+                        updateCartCount();
+                        updateCartModal();
+                    });
+                });
+            }
+
+            // Оформление заказа
+            checkoutBtn.addEventListener('click', () => {
+                if (cart.length === 0) {
+                    alert('Корзина пуста!');
+                    return;
+                }
+                
+                const location = document.getElementById('pickup-location').value;
+                const orderData = {
+                    type: 'pickup',
+                    location: location,
+                    items: cart,
+                    total: calculateTotal()
+                };
+                
+                tg.sendData(JSON.stringify(orderData));
+                tg.close();
+            });
+
+            // Обновление счетчика корзины
+            function updateCartCount() {
+                const total = cart.reduce((sum, item) => sum + item.quantity, 0);
+                document.getElementById('cart-count').textContent = total;
+            }
+
+            // Расчет общей суммы
+            function calculateTotal() {
+                return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            }
+        }
+
+        // Переключение между вкладками
+        function setupTabSwitching() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Убираем активный класс у всех вкладок
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    // Скрываем все содержимое вкладок
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Добавляем активный класс текущей вкладке
+                    tab.classList.add('active');
+                    // Показываем содержимое текущей вкладки
+                    document.getElementById(tab.dataset.tab).classList.add('active');
+                    
+                    // Показываем/скрываем иконку корзины
+                    if (tab.dataset.tab === 'pickup') {
+                        document.getElementById('cart-icon').style.display = 'flex';
+                    } else {
+                        document.getElementById('cart-icon').style.display = 'none';
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
